@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sky Guide</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top, #0f2027, #203a43, #000);
+  color: white;
+  text-align: center;
+}
+
+.container {
+  padding: 20px;
+}
+
+h1 {
+  font-size: 28px;
+}
+
+button {
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #00c6ff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.card {
+  margin: 15px auto;
+  padding: 15px;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  width: 90%;
+  max-width: 400px;
+}
+
+.arrow {
+  font-size: 40px;
+  margin: 10px 0;
+  transition: transform 0.5s ease;
+}
+
+.loader {
+  margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🌌 Sky Guide</h1>
+  <button onclick="start()">Find Planets Around Me</button>
+
+  <div id="loader" class="loader"></div>
+  <div id="output"></div>
+</div>
+
+<script>
+let heading = 0;
+
+// Try to get compass direction
+window.addEventListener("deviceorientation", (event) => {
+  if (event.alpha !== null) {
+    heading = event.alpha;
+  }
+});
+
+function getArrowRotation(targetAzimuth) {
+  let diff = targetAzimuth - heading;
+  return diff;
+}
+
+function start() {
+  const output = document.getElementById("output");
+  const loader = document.getElementById("loader");
+
+  output.innerHTML = "";
+  loader.innerText = "📡 Getting location...";
+
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+
+    loader.innerText = "🌠 Fetching sky data...";
+
+    try {
+      const res = await fetch(`https://astro-backend-xffp.onrender.com/sky?lat=${lat}&lon=${lon}`);
+      const data = await res.json();
+
+      loader.innerText = "";
+
+      if (data.length === 0) {
+        output.innerHTML = "<p>No planets visible</p>";
+        return;
+      }
+
+      data.forEach(p => {
+        const rotation = getArrowRotation(p.azimuth);
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+          <h3>🪐 ${p.name}</h3>
+          <div class="arrow" style="transform: rotate(${rotation}deg)">⬆️</div>
+          <p>Turn until arrow points up</p>
+          <p>📏 ${p.altitude}° above horizon</p>
+        `;
+
+        output.appendChild(card);
+      });
+
+    } catch {
+      loader.innerText = "❌ Failed to load";
+    }
+
+  }, () => {
+    loader.innerText = "❌ Location permission denied";
+  });
+}
+</script>
+
+</body>
+</html>
