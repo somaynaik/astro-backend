@@ -1,11 +1,13 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from skyfield.api import load, Topos
 
 app = Flask(__name__)
 
+# Load data once
 ts = load.timescale()
 planets = load('de421.bsp')
 earth = planets['earth']
+
 
 def get_direction(az):
     if az >= 337.5 or az < 22.5:
@@ -25,10 +27,19 @@ def get_direction(az):
     else:
         return "North-West"
 
-@app.route('/sky')
+
+@app.route("/")
+def home():
+    return "Sky API is running"
+
+
+@app.route("/sky")
 def sky():
-    # hardcoded for now (we'll fix later)
-    lat, lon = 15.4226, 73.9798
+    lat = request.args.get("lat", type=float)
+    lon = request.args.get("lon", type=float)
+
+    if lat is None or lon is None:
+        return jsonify({"error": "Missing lat/lon"}), 400
 
     location = earth + Topos(latitude_degrees=lat, longitude_degrees=lon)
     t = ts.now()
@@ -51,10 +62,12 @@ def sky():
             result.append({
                 "name": name,
                 "direction": get_direction(az.degrees),
-                "altitude": int(alt.degrees)
+                "altitude": int(alt.degrees),
+                "azimuth": int(az.degrees)
             })
 
     return jsonify(result)
 
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
