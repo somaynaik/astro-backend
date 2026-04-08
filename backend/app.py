@@ -1,11 +1,10 @@
-from flask_cors import CORS
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from skyfield.api import load, Topos
 
 app = Flask(__name__)
 CORS(app)
 
-# Load data once
 ts = load.timescale()
 planets = load('de421.bsp')
 earth = planets['earth']
@@ -32,7 +31,7 @@ def get_direction(az):
 
 @app.route("/")
 def home():
-    return "Sky API is running"
+    return "Sky API running"
 
 
 @app.route("/sky")
@@ -69,7 +68,3 @@ def sky():
             })
 
     return jsonify(result)
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
