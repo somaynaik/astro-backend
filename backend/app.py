@@ -1,7 +1,9 @@
+from flask_cors import CORS
 from flask import Flask, jsonify, request
 from skyfield.api import load, Topos
 
 app = Flask(__name__)
+CORS(app)
 
 # Load data once
 ts = load.timescale()
